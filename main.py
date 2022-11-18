@@ -1,27 +1,34 @@
 from fuzzywuzzy import process
+import re
+from collections import deque
 
 docx_txt_filename = 'data/docx.txt'
 pdf_txt_filename = 'data/pdf.txt'
 docx_pdf_txt_filename = 'data/docx_pdf.txt'
 
+docx_txt_filename = 'data_remote/list_docx_text.txt'
+pdf_txt_filename = 'data_remote/list_pdf_text.txt'
+docx_pdf_txt_filename = 'data_remote/docx_pdf.txt'
+
+
 
 def clean_special_chars(lst):
     lst = [s.replace(u"\u202F", " ") for s in lst]
+    lst = [re.sub(' +', ' ', s) for s in lst]
     return lst
 
 def get_paragraph_starts(docx_text, pdf_text):
-    index = 0
-    p_starts = set()
+    p_starts = deque([0, 0])
     for dl in docx_text:
         if len(dl) < 3:
             continue
         i = min(70, len(dl))
         prefix = dl[:i]
-        pls = process.extract(prefix, pdf_text[index:], limit=1)
+        pls = process.extract(prefix, pdf_text[p_starts[-2]:], limit=3)
         pl = pls[0][0]
-        index = pdf_text.index(pl)
-        p_starts.add(index)
-    return sorted(p_starts)
+        new_index = pdf_text.index(pl)
+        p_starts.append(new_index)
+    return sorted(set(p_starts))
 
 
 def format_paragraphs(docx_text, pdf_text):
