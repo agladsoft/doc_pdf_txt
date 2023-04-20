@@ -1,9 +1,12 @@
 import itertools as itt
+import datetime as dt
 
 from dataclasses import dataclass
 import dataclasses
 import heapq
 import re
+import numpy as np
+
 
 import fuzzywuzzy.fuzz
 from fuzzywuzzy import process
@@ -14,7 +17,6 @@ class Paragraph(object):
         self.symbols = symbols
         self.symbols_count = len(self.symbols)
         self.global_position = position[0]
-        self.global_text_size = position[1]
         self.token_borders = self._get_cleaned_token_borders()
         self.tokens = self._get_tokens(3)
         self.tokens_count = len(self.tokens)
@@ -69,9 +71,11 @@ class Paragraph(object):
 
 
 def paragraph_factory(text):
+    """Creates dict[Paragraph] with absolute start position of every paragraph as dict key"""
     prev_p = None
     global_position = 0
     paragraphs = dict()
+    text += "\n"  # add empty paragraph because we work with start positions of paragraphs
     for line in text:
         current_p = Paragraph(line, position=(global_position, len(text)), nbrs=(prev_p, None))
         paragraphs[global_position] = current_p
@@ -84,6 +88,7 @@ def paragraph_factory(text):
 
 @dataclass
 class ChapterSide:
+    """One side of chapter"""
     paragraphs: dict[int:Paragraph]
     start_id: int
     end_id: int
@@ -121,22 +126,26 @@ class BorderTokenMatch(object):
 class BorderMatch(object):
     def __init__(self, left_bstart_token, left_bend_token, left_border_pid,
                  right_bstart_tokens, right_bend_tokens, right_chapter):
+        self.left_bstart_token = left_bstart_token
+        self.left_bend_token = left_bend_token
+        self.left_border_pid = left_border_pid
+        self.right_bstart_tokens = right_bstart_tokens
+        self.right_bend_tokens = right_bend_tokens
+        self.right_chapter = right_chapter
         self.bstart_token_match = BorderTokenMatch(left_bstart_token, right_bstart_tokens)
         self.bend_token_match = BorderTokenMatch(left_bend_token, right_bend_tokens)
-        self.left_border_pid = left_border_pid
 
         self.best_bstart_right_token, \
         self.best_bend_right_token, \
-        self.best_pid_distance = self._get_best_found_bend_bstart_tokens_and_pid_distance()
+        self.tokens_rate, \
+        self.best_char_distance = self._get_best_found_bend_bstart_tokens_and_best_char_distance()
         a = 1
         assert self.best_bend_right_token, "best_bend_right_token is none, no good match found"
-        self.best_char_distance = self.best_bend_right_token.paragraph_id - \
-                                  self.best_bstart_right_token.paragraph_id - \
-                                  right_chapter.paragraphs[self.best_bstart_right_token.paragraph_id].symbols_count
 
-        self.tokens_rate = self._get_tokens_rate()
+        # self.tokens_rate = self._get_tokens_rate()
 
-        self.border_rate = 1 / self.tokens_rate * 100 + self.best_char_distance
+        self.border_rate = self.tokens_rate / 10 + self.best_char_distance
+        a = 1
 
     def __lt__(self, other):
         return self.border_rate < other.border_rate
@@ -149,21 +158,35 @@ class BorderMatch(object):
             tokens_rate = 0.1
         return tokens_rate
 
-    def _get_best_found_bend_bstart_tokens_and_pid_distance(self):
+    @staticmethod
+    def _get_mse_of_found_right_tokens(bs: FoundRightToken, be: FoundRightToken):
+        y_true = [100, 100]  # Y_true = Y (original values)
+        # Calculated values
+        y_pred = [bs.rate, be.rate]  # Y_pred = Y'
+        # Mean Squared Error
+        mse = np.square(np.subtract(y_true, y_pred)).mean()
+        return mse
+
+    def _get_best_found_bend_bstart_tokens_and_best_char_distance(self):
         best_bs = None
         best_be = None
-        best_pid_distance = 99999999
+        best_mse = 99999999
+        best_char_distance = 99999999
         for bs, be in itt.product(self.bstart_token_match.found_right_tokens,
                                   self.bend_token_match.found_right_tokens):
-            pid_distance = be.paragraph_id - bs.paragraph_id
-            if (pid_distance > 0) and (pid_distance <= best_pid_distance):
-                best_bs, best_be = bs, be
-            best_pid_distance = best_be.paragraph_id - best_bs.paragraph_id if best_bs else 99999999
+            char_distance = be.paragraph_id - \
+                            bs.paragraph_id - \
+                            self.right_chapter.paragraphs[bs.paragraph_id].symbols_count
+            mse = self._get_mse_of_found_right_tokens(bs, be)
+
+            if (char_distance >= 0) and (char_distance <= best_char_distance) and (mse < best_mse):
+                best_bs, best_be, best_mse, best_char_distance,  = bs, be, mse, char_distance
         a = 1
-        return best_bs, best_be, best_pid_distance
+        return best_bs, best_be, best_mse, best_char_distance
 
 
 class MatchedChapter(object):
+    """Chapter that match left and right side, check and spawn subchapter if possible"""
     def __init__(self, left_chapter: ChapterSide, right_chapter: ChapterSide, nbrs: tuple = (None, None),
                  born_border_match: float = None):
         self.left_chapter = left_chapter
@@ -174,15 +197,22 @@ class MatchedChapter(object):
         self._get_right_tokens()
         self.border_matches_heap = self._fill_border_matches_heap()
         self.born_border_match = born_border_match
+        self.born_datetime = dt.datetime.now()
 
         self.prev = nbrs[0]
         self.next = nbrs[1]
 
     def _get_right_tokens(self, ):
+        """
+        Fill right_bstart_tokens with tokens that may be in the start of the border.
+        And right_bend_tokens with tokens that may be in the end of the border.
+        """
         right_p = self.right_chapter.paragraphs[self.right_chapter.start_id]
         while right_p and right_p.global_position <= self.right_chapter.end_id:
-            self.right_bstart_tokens[right_p.global_position] = right_p.tokens[-1]
-            self.right_bend_tokens[right_p.global_position] = right_p.tokens[0]
+            if right_p.global_position != self.right_chapter.end_id:
+                self.right_bstart_tokens[right_p.global_position] = right_p.tokens[-1]
+            if right_p.global_position != self.right_chapter.start_id:
+                self.right_bend_tokens[right_p.global_position] = right_p.tokens[0]
             right_p = right_p.next
 
     def _fill_border_matches_heap(self):
@@ -233,28 +263,3 @@ class MatchedChapter(object):
                 self.prev.next = parent
             return parent, child
         assert "spawn is not possible"
-
-
-
-
-
-
-
-
-def split_paragraph(original, text_position):
-    new1_text = original.symbols[:text_position]
-    new2_text = original.symbols[text_position:]
-
-    new1 = Paragraph(new1_text,
-                     position=(original.global_position, original.global_text_size),
-                     nbrs=(original.prev, None)
-                     )
-    new2 = Paragraph(new2_text,
-                     original.next,
-                     position=(original.global_position + len(new1_text), original.global_text_size),
-                     nbrs=(new1, original.next)
-                     )
-
-    new1.next = new2
-
-    return new1

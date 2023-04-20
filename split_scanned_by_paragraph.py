@@ -1,15 +1,16 @@
 from fuzzywuzzy import fuzz
 from fuzzywuzzy import process
 
-from paragraph import paragraph_factory, split_paragraph, MatchedChapter, ChapterSide
+from paragraph import paragraph_factory, MatchedChapter, ChapterSide
+import datetime as dt
 
 
-with open('ruscon_fuzzy/Юристы/Left/paragraphs2.txt') as f:
+with open('ruscon_fuzzy/Юристы/Left/paragraphs4.txt') as f:
     left_text = f.readlines()
     left_paragraphs = paragraph_factory(left_text)
     left_head = left_paragraphs[0]
 
-with open('ruscon_fuzzy/Юристы/Right/Right2.txt') as f:
+with open('ruscon_fuzzy/Юристы/Right/paragraphs4.txt') as f:
     right_text = f.readlines()
     right_paragraphs = paragraph_factory(right_text)
     right_head = right_paragraphs[0]
@@ -19,17 +20,17 @@ left_chapter = ChapterSide(left_paragraphs, 0, next(reversed(left_paragraphs)))
 right_chapter = ChapterSide(right_paragraphs, 0, next(reversed(right_paragraphs)))
 
 head_chapter = MatchedChapter(left_chapter, right_chapter)
-thr = 1
-while thr < 2:
-    current_chapter = head_chapter
+thr = .1
+while thr < 300:
+    # current_chapter = head_chapter
     next_chapter = head_chapter
     while next_chapter:
         current_chapter = next_chapter
         next_chapter = next_chapter.next
         while current_chapter.spawn_possible(thr):
-            # TODO: save chapters to text to evaluate final results
-            # TODO: how to split by paragraph chapters with bad thr?
-            # TODO: check char_distance calculation
+            # TODO: how to split by paragraph chapters with bad thr? ...
+            #       ... use all tokens as possible border_start and border_end
+            # TODO: use thr according to history of mse not passed thr recently
             parent_chapter, child_chapter = current_chapter.spawn_subchapter(thr)
             if current_chapter is head_chapter:
                 head_chapter = parent_chapter
@@ -39,8 +40,8 @@ while thr < 2:
         with open(f'thr_right_{thr}.txt', 'w') as f_right:
             write_chapter = head_chapter
             while write_chapter:
-                header_to_write = "se2_id: {}, born_border_match: {}\n".format(write_chapter.se2_id,
-                                                                               write_chapter.born_border_match)
+                header_to_write = "se2_id: {}, born_border_match: {}, timestamp: {}\n".format(
+                    write_chapter.se2_id, write_chapter.born_border_match, write_chapter.born_datetime)
                 f_left.write(header_to_write)
                 f_right.write(header_to_write)
 
@@ -58,7 +59,7 @@ while thr < 2:
 
                 write_chapter = write_chapter.next
 
-    thr = thr * (1 + 0.618 ** 5)
+    thr = thr * (1 + 0.618)
 
 a = 1
 

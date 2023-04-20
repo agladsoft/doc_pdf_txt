@@ -1,4 +1,6 @@
+import fuzzywuzzy
 from fuzzywuzzy import process
+
 import re
 from collections import deque
 
@@ -24,7 +26,10 @@ def get_paragraph_starts(docx_text, pdf_text):
             continue
         i = min(70, len(dl))
         prefix = dl[:i]
-        pls = process.extract(prefix, pdf_text[p_starts[-2]:], limit=3)
+        pls = process.extract(prefix,
+                              pdf_text[min((p_starts[-2], p_starts[-1])):],
+                              scorer=fuzzywuzzy.fuzz.ratio,
+                              limit=3)
         pl = pls[0][0]
         new_index = pdf_text.index(pl)
         p_starts.append(new_index)
