@@ -5,6 +5,8 @@ all_m_chapters = dict()
 
 
 def write_chapters_to_files(head_chapter, filename_prefix):
+    text_left = ''
+    text_right = ''
     with open(f'{filename_prefix}_left_{thr}.txt', 'w') as f_left:
         with open(f'{filename_prefix}_right_{thr}.txt', 'w') as f_right:
             write_chapter = head_chapter
@@ -19,15 +21,19 @@ def write_chapters_to_files(head_chapter, filename_prefix):
                     if key >= write_chapter.left_chapter.start_id and key <= write_chapter.left_chapter.end_id:
                         lines_to_write += val.symbols
                 f_left.writelines(lines_to_write)
+                text_left += lines_to_write
+                text_left += '\n'
 
                 lines_to_write = ''
                 for key, val in write_chapter.right_chapter.paragraphs.items():
                     if key >= write_chapter.right_chapter.start_id and key <= write_chapter.right_chapter.end_id:
                         lines_to_write += val.symbols
                 f_right.writelines(lines_to_write)
+                text_right += lines_to_write
+                text_right += '\n'
 
                 write_chapter = write_chapter.next
-    return head_chapter
+    return text_left, text_right
 
 
 def write_all_m_chapters(prefix):
@@ -102,8 +108,6 @@ while thr < MAX_THR:
     thr = thr * (1 + 0.618)
 
 
-a = 1
-# TODO: 1. build right_text from MatchedChapters with rule to combine all right paragraphs per Chapter into single line(paragraph)
 logger.info('flatten_right_paragraphs_text...')
 right_text = flatten_right_paragraphs_text(head_chapter)
 with open('ruscon_fuzzy/Юристы/Right/flatten_right_paragraphs_text.txt', 'w') as f:
@@ -123,17 +127,7 @@ while thr < MAX_THR:
     head_chapter = spawn_chapters(head_chapter)
     write_chapters_to_files(head_chapter, 'thr2')
     write_all_m_chapters('all_m_chapters2')
-
-
     thr = thr * (1 + 0.618)
-
-#       3. build linked list of MatchedChapterByToken from MatchedChapter linked list
-
-#       4. Run MatchedChapterByToken spawn_subchapter cycle for objects with > 1 left paragraphs (se2_id start != end)
-
-#       5. save reports
-
-a = 1
 
 logger.info('chapters_by_token_factory...')
 head_chapter_bt = chapters_by_token_factory(head_chapter)
@@ -144,10 +138,11 @@ logger.info('MatchedChapterByToken iteration')
 thr = .1
 while thr < MAX_THR * pow(0.618, 1):
     head_chapter_bt = spawn_chapters(head_chapter_bt)
-    write_chapters_to_files(head_chapter_bt, 'bt_thr')
+    left_final, right_final = write_chapters_to_files(head_chapter_bt, 'bt_thr')
     write_all_m_chapters('all_m_chapters_bt')
 
     thr = thr * (1 + 0.618)
     print(thr)
 
-a = 1
+print(left_final)
+print(right_final)
