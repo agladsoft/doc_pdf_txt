@@ -105,7 +105,7 @@ def main(source_left, source_right):
     while thr < MAX_THR:
         logger.info(f'Next thr cycle started.! thr is {thr}')
         head_chapter = spawn_chapters(head_chapter, thr)
-        write_chapters_to_files(head_chapter, 'thr', thr)
+        # write_chapters_to_files(head_chapter, 'thr', thr)
         # write_all_m_chapters('all_m_chapters')
 
         thr = thr * (1 + 0.618)
@@ -128,7 +128,7 @@ def main(source_left, source_right):
     thr = .1
     while thr < MAX_THR:
         head_chapter = spawn_chapters(head_chapter, thr)
-        write_chapters_to_files(head_chapter, 'thr2', thr)
+        # write_chapters_to_files(head_chapter, 'thr2', thr)
         # write_all_m_chapters('all_m_chapters2')
         thr = thr * (1 + 0.618)
 
