@@ -1,10 +1,10 @@
 from paragraph import paragraph_factory, chapters_by_token_factory, MatchedChapter, ChapterSide, logger
 
 # logger = logging.getLogger(__name__)
-all_m_chapters = dict()
 
 
-def write_chapters_to_files(head_chapter, filename_prefix):
+
+def write_chapters_to_files(head_chapter, filename_prefix, thr):
     text_left = ''
     text_right = ''
     with open(f'{filename_prefix}_left_{thr}.txt', 'w') as f_left:
@@ -41,7 +41,7 @@ def write_all_m_chapters(prefix):
         f.write("\n".join([str(kv) for kv in all_m_chapters.items()]))
 
 
-def spawn_chapters(head_chapter: MatchedChapter):
+def spawn_chapters(head_chapter: MatchedChapter, thr):
     next_chapter = head_chapter
     while next_chapter:
         current_chapter = next_chapter
@@ -50,8 +50,8 @@ def spawn_chapters(head_chapter: MatchedChapter):
             logger.info(f'current_chapter is {current_chapter}')
             parent_chapter, child_chapter = current_chapter.spawn_child(thr)
             current_chapter.is_obsolete = True
-            all_m_chapters[parent_chapter.se2_id] = parent_chapter
-            all_m_chapters[child_chapter.se2_id] = child_chapter
+            # all_m_chapters[parent_chapter.se2_id] = parent_chapter
+            # all_m_chapters[child_chapter.se2_id] = child_chapter
 
             if current_chapter is head_chapter:
                 head_chapter = parent_chapter
@@ -79,77 +79,86 @@ def flatten_right_paragraphs_text(head_chapter):
     return right_text_by_lines
 
 
-MAX_THR = 200
+def main(source_left, source_right):
 
-with open('ruscon_fuzzy/Юристы/Left/paragraphs.txt') as f:
-    left_text = f.readlines()
-left_paragraphs = paragraph_factory(left_text)
-# left_head = left_paragraphs[0]
+    MAX_THR = 200
 
-with open('ruscon_fuzzy/Юристы/Right/Right.txt') as f:
-    right_text = f.readlines()
-right_paragraphs = paragraph_factory(right_text)
-# right_head = right_paragraphs[0]
+    with open(source_left) as f:
+        left_text = f.readlines()
+    left_paragraphs = paragraph_factory(left_text)
+    # left_head = left_paragraphs[0]
 
-
-left_chapter = ChapterSide(left_paragraphs, 0, next(reversed(left_paragraphs)))
-right_chapter = ChapterSide(right_paragraphs, 0, next(reversed(right_paragraphs)))
-
-logger.info('MatchedChapter - 1st iteration')
-head_chapter = MatchedChapter(left_chapter, right_chapter)
-all_m_chapters[head_chapter.se2_id] = head_chapter
-thr = .1
-while thr < MAX_THR:
-    logger.info(f'Next thr cycle started.! thr is {thr}')
-    head_chapter = spawn_chapters(head_chapter)
-    write_chapters_to_files(head_chapter, 'thr')
-    write_all_m_chapters('all_m_chapters')
-
-    thr = thr * (1 + 0.618)
+    with open(source_right) as f:
+        right_text = f.readlines()
+    right_paragraphs = paragraph_factory(right_text)
+    # right_head = right_paragraphs[0]
 
 
-logger.info('flatten_right_paragraphs_text...')
-right_text = flatten_right_paragraphs_text(head_chapter)
-with open('ruscon_fuzzy/Юристы/Right/flatten_right_paragraphs_text.txt', 'w') as f:
-    f.writelines(right_text)
-# Build data structeres from the scratch
-right_paragraphs = paragraph_factory(right_text)
-right_chapter = ChapterSide(right_paragraphs, 0, next(reversed(right_paragraphs)))
-head_chapter = MatchedChapter(left_chapter, right_chapter)
+    left_chapter = ChapterSide(left_paragraphs, 0, next(reversed(left_paragraphs)))
+    right_chapter = ChapterSide(right_paragraphs, 0, next(reversed(right_paragraphs)))
 
-all_m_chapters = dict()
-all_m_chapters[head_chapter.se2_id] = head_chapter
+    logger.info('MatchedChapter - 1st iteration')
+    head_chapter = MatchedChapter(left_chapter, right_chapter)
+    # all_m_chapters = dict()
+    # all_m_chapters[head_chapter.se2_id] = head_chapter
+    thr = .1
+    while thr < MAX_THR:
+        logger.info(f'Next thr cycle started.! thr is {thr}')
+        head_chapter = spawn_chapters(head_chapter, thr)
+        write_chapters_to_files(head_chapter, 'thr', thr)
+        # write_all_m_chapters('all_m_chapters')
 
-#       2. run MatchedChapter spawn_subchapter cycle once again
-logger.info('MatchedChapter - 2nd iteration')
-thr = .1
-while thr < MAX_THR:
-    head_chapter = spawn_chapters(head_chapter)
-    write_chapters_to_files(head_chapter, 'thr2')
-    write_all_m_chapters('all_m_chapters2')
-    thr = thr * (1 + 0.618)
+        thr = thr * (1 + 0.618)
 
 
-logger.info('chapters_by_token_factory...')
-head_chapter_bt = chapters_by_token_factory(head_chapter)
-all_m_chapters = dict()
-all_m_chapters[head_chapter_bt.se2_id] = head_chapter_bt
+    logger.info('flatten_right_paragraphs_text...')
+    right_text = flatten_right_paragraphs_text(head_chapter)
+    with open('ruscon_fuzzy/Юристы/Right/flatten_right_paragraphs_text.txt', 'w') as f:
+        f.writelines(right_text)
+    # Build data structeres from the scratch
+    right_paragraphs = paragraph_factory(right_text)
+    right_chapter = ChapterSide(right_paragraphs, 0, next(reversed(right_paragraphs)))
+    head_chapter = MatchedChapter(left_chapter, right_chapter)
 
-logger.info('MatchedChapterByToken iteration')
-thr = .1
-while thr < MAX_THR * pow(0.618, 1):
-    head_chapter_bt = spawn_chapters(head_chapter_bt)
-    left_final, right_final = write_chapters_to_files(head_chapter_bt, 'bt_thr')
-    write_all_m_chapters('all_m_chapters_bt')
+    # all_m_chapters = dict()
+    # all_m_chapters[head_chapter.se2_id] = head_chapter
 
-    thr = thr * (1 + 0.618)
-    print(thr)
+    #       2. run MatchedChapter spawn_subchapter cycle once again
+    logger.info('MatchedChapter - 2nd iteration')
+    thr = .1
+    while thr < MAX_THR:
+        head_chapter = spawn_chapters(head_chapter, thr)
+        write_chapters_to_files(head_chapter, 'thr2', thr)
+        # write_all_m_chapters('all_m_chapters2')
+        thr = thr * (1 + 0.618)
 
-print(left_final)
-print(right_final)
 
-with open(f'output_left_final.txt', 'w') as f_left:
-    f_left.write(left_final)
+    logger.info('chapters_by_token_factory...')
+    head_chapter_bt = chapters_by_token_factory(head_chapter)
+    # all_m_chapters = dict()
+    # all_m_chapters[head_chapter_bt.se2_id] = head_chapter_bt
 
-with open(f'output_right_final.txt', 'w') as f_right:
-    f_right.write(right_final)
+    logger.info('MatchedChapterByToken iteration')
+    thr = .1
+    while thr < MAX_THR * pow(0.618, 1):
+        head_chapter_bt = spawn_chapters(head_chapter_bt, thr)
+        left_final, right_final = write_chapters_to_files(head_chapter_bt, 'bt_thr', thr)
+        # write_all_m_chapters('all_m_chapters_bt')
+
+        thr = thr * (1 + 0.618)
+        print(thr)
+
+    print(left_final)
+    print(right_final)
+
+    with open(f'output_left_final.txt', 'w') as f_left:
+        f_left.write(left_final)
+
+    with open(f'output_right_final.txt', 'w') as f_right:
+        f_right.write(right_final)
+
+    return left_final, right_final
+
+if __name__ == '__main__':
+    left_final, right_final = main('ruscon_fuzzy/Юристы/Left/paragraphs.txt',
+                                   'ruscon_fuzzy/Юристы/Right/Right.txt')
