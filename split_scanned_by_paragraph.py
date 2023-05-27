@@ -129,6 +129,7 @@ while thr < MAX_THR:
     write_all_m_chapters('all_m_chapters2')
     thr = thr * (1 + 0.618)
 
+
 logger.info('chapters_by_token_factory...')
 head_chapter_bt = chapters_by_token_factory(head_chapter)
 all_m_chapters = dict()
@@ -146,3 +147,9 @@ while thr < MAX_THR * pow(0.618, 1):
 
 print(left_final)
 print(right_final)
+
+with open(f'output_left_final.txt', 'w') as f_left:
+    f_left.write(left_final)
+
+with open(f'output_right_final.txt', 'w') as f_right:
+    f_right.write(right_final)
