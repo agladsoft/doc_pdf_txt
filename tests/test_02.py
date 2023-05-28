@@ -13,6 +13,7 @@ def test_02():
     with open(f'tests/test_02_right_output.txt', 'w') as f:
         f.write(right_result)
 
+    assert len(right_result) // 10 == 517
     assert len(right_result.splitlines()) == 32
 
 

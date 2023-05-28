@@ -1,5 +1,5 @@
 from paragraph import paragraph_factory, chapters_by_token_factory, MatchedChapter, ChapterSide, logger
-
+from paragraph import chapters_by_best_token_factory
 # logger = logging.getLogger(__name__)
 
 
@@ -148,8 +148,23 @@ def main(source_left, source_right):
         thr = thr * (1 + 0.618)
         print(thr)
 
-    print(left_final)
-    print(right_final)
+
+
+
+    # logger.info('chapters_by_best_token_factory...')
+    # head_chapter_best_bt = chapters_by_best_token_factory(head_chapter)
+    # # all_m_chapters = dict()
+    # # all_m_chapters[head_chapter_bt.se2_id] = head_chapter_bt
+    #
+    # logger.info('MatchedChapterByBestToken iteration')
+    # thr = .1
+    # while thr < MAX_THR * pow(0.618, 1):
+    #     head_chapter_best_bt = spawn_chapters(head_chapter_best_bt, thr)
+    #     left_final, right_final = write_chapters_to_files(head_chapter_best_bt, 'best_bt_thr', thr)
+    #     # write_all_m_chapters('all_m_chapters_bt')
+    #
+    #     thr = thr * (1 + 0.618)
+    #     print(thr)
 
     with open(f'output_left_final.txt', 'w') as f_left:
         f_left.write(left_final)
