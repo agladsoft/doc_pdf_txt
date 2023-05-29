@@ -161,7 +161,7 @@ def match_chapter_bs_bt(head_chapter_bt, max_thr):
     return left_final, right_final, head_chapter_best_be_bt
 
 
-def main(source_left: List[str], source_right: List[str], max_thr=200):
+def main(source_left: List[str], source_right: List[str], max_thr):
     left_paragraphs = paragraph_factory(source_left)
     right_paragraphs = paragraph_factory(source_right)
 
@@ -183,7 +183,9 @@ if __name__ == '__main__':
     with open('right.txt') as f:
         right_text = f.readlines()
 
-    left_final, right_final = main(left_text, right_text)
+    max_thr = 200
+
+    left_final, right_final = main(left_text, right_text, max_thr)
 
     with open(f'output_left_final.txt', 'w') as f_left:
         f_left.write(left_final)
