@@ -1,5 +1,6 @@
 from paragraph import paragraph_factory, chapters_by_token_factory, MatchedChapter, ChapterSide, logger
 from paragraph import chapters_by_best_be_token_factory, chapters_by_best_bs_token_factory
+from typing import List, Tuple
 # logger = logging.getLogger(__name__)
 
 
@@ -79,121 +80,113 @@ def flatten_right_paragraphs_text(head_chapter):
     return right_text_by_lines
 
 
-def main(source_left, source_right):
-
-    MAX_THR = 200
-
-    with open(source_left) as f:
-        left_text = f.readlines()
-    left_paragraphs = paragraph_factory(left_text)
-    # left_head = left_paragraphs[0]
-
-    with open(source_right) as f:
-        right_text = f.readlines()
-    right_paragraphs = paragraph_factory(right_text)
-    # right_head = right_paragraphs[0]
 
 
-    left_chapter = ChapterSide(left_paragraphs, 0, next(reversed(left_paragraphs)))
-    right_chapter = ChapterSide(right_paragraphs, 0, next(reversed(right_paragraphs)))
-
+def match_chapter_1(left_chapter, right_chapter, max_thr):
     logger.info('MatchedChapter - 1st iteration')
     head_chapter = MatchedChapter(left_chapter, right_chapter)
-    # all_m_chapters = dict()
-    # all_m_chapters[head_chapter.se2_id] = head_chapter
     thr = .1
-    while thr < MAX_THR:
+    while thr < max_thr:
         logger.info(f'Next thr cycle started.! thr is {thr}')
         head_chapter = spawn_chapters(head_chapter, thr)
         # write_chapters_to_files(head_chapter, 'thr', thr)
-        # write_all_m_chapters('all_m_chapters')
 
         thr = thr * (1 + 0.618)
+    return head_chapter
 
 
+def match_chapter_2(left_chapter, head_chapter, max_thr):
     logger.info('flatten_right_paragraphs_text...')
     right_text = flatten_right_paragraphs_text(head_chapter)
-    # with open('ruscon_fuzzy/Юристы/Right/flatten_right_paragraphs_text.txt', 'w') as f:
-    #     f.writelines(right_text)
     # Build data structeres from the scratch
     right_paragraphs = paragraph_factory(right_text)
     right_chapter = ChapterSide(right_paragraphs, 0, next(reversed(right_paragraphs)))
     head_chapter = MatchedChapter(left_chapter, right_chapter)
 
-    # all_m_chapters = dict()
-    # all_m_chapters[head_chapter.se2_id] = head_chapter
-
     #       2. run MatchedChapter spawn_subchapter cycle once again
     logger.info('MatchedChapter - 2nd iteration')
     thr = .1
-    while thr < MAX_THR:
+    while thr < max_thr:
         head_chapter = spawn_chapters(head_chapter, thr)
         # write_chapters_to_files(head_chapter, 'thr2', thr)
-        # write_all_m_chapters('all_m_chapters2')
         thr = thr * (1 + 0.618)
 
+    return head_chapter
 
+
+def match_chapter_bt(head_chapter, max_thr):
     logger.info('chapters_by_token_factory...')
     head_chapter_bt = chapters_by_token_factory(head_chapter)
-    # all_m_chapters = dict()
-    # all_m_chapters[head_chapter_bt.se2_id] = head_chapter_bt
 
     logger.info('MatchedChapterByToken iteration')
     thr = .1
-    while thr < MAX_THR * pow(0.618, 1):
+    while thr < max_thr * pow(0.618, 1):
         head_chapter_bt = spawn_chapters(head_chapter_bt, thr)
         left_final, right_final = write_chapters_to_files(head_chapter_bt, 'bt_thr', thr)
-        # write_all_m_chapters('all_m_chapters_bt')
 
         thr = thr * (1 + 0.618)
         print(thr)
     a = 1
+    return left_final, right_final, head_chapter_bt
 
 
 
+def match_chapter_be_bt(head_chapter_bt, max_thr):
     logger.info('chapters_by_best_be_token_factory...')
     head_chapter_best_be_bt = chapters_by_best_be_token_factory(head_chapter_bt)
-    # all_m_chapters = dict()
-    # all_m_chapters[head_chapter_bt.se2_id] = head_chapter_bt
-
     # logger.info('MatchedChapterByBestToken iteration')
     thr = .1
-    while thr < MAX_THR * pow(0.618, 12):  # 15 mean run only once
+    while thr < max_thr * pow(0.618, 8):  # 15 mean run only once
         head_chapter_best_be_bt = spawn_chapters(head_chapter_best_be_bt, thr)
         left_final, right_final = write_chapters_to_files(head_chapter_best_be_bt, 'best_be_bt_thr', thr)
-        # write_all_m_chapters('all_m_chapters_bt')
 
         thr = thr * (1 + 0.618)
         print(thr)
 
+    return left_final, right_final, head_chapter_best_be_bt
 
 
-    # logger.info('chapters_by_best_bs_token_factory...')
-    head_chapter_best_bs_bt = chapters_by_best_bs_token_factory(head_chapter_best_be_bt)
-    # all_m_chapters = dict()
-    # all_m_chapters[head_chapter_bt.se2_id] = head_chapter_bt
-
+def match_chapter_bs_bt(head_chapter_bt, max_thr):
+    logger.info('chapters_by_best_be_token_factory...')
+    head_chapter_best_be_bt = chapters_by_best_be_token_factory(head_chapter_bt)
     # logger.info('MatchedChapterByBestToken iteration')
     thr = .1
-    while thr < MAX_THR * pow(0.618, 12):  # 15 mean run only once
-        head_chapter_best_bs_bt = spawn_chapters(head_chapter_best_bs_bt, thr)
-        left_final, right_final = write_chapters_to_files(head_chapter_best_bs_bt, 'best_bs_bt_thr', thr)
-        # write_all_m_chapters('all_m_chapters_bt')
+    while thr < max_thr * pow(0.618, 8):  # 15 mean run only once
+        head_chapter_best_be_bt = spawn_chapters(head_chapter_best_be_bt, thr)
+        left_final, right_final = write_chapters_to_files(head_chapter_best_be_bt, 'best_be_bt_thr', thr)
 
         thr = thr * (1 + 0.618)
         print(thr)
 
+    return left_final, right_final, head_chapter_best_be_bt
 
 
+def main(source_left: List[str], source_right: List[str], max_thr=200):
+    left_paragraphs = paragraph_factory(source_left)
+    right_paragraphs = paragraph_factory(source_right)
+
+    left_chapter = ChapterSide(left_paragraphs, 0, next(reversed(left_paragraphs)))
+    right_chapter = ChapterSide(right_paragraphs, 0, next(reversed(right_paragraphs)))
+
+    head_chapter = match_chapter_1(left_chapter, right_chapter, max_thr)
+    head_chapter = match_chapter_2(left_chapter, head_chapter, max_thr)
+    left_final, right_final, head_chapter_bt = match_chapter_bt(head_chapter, max_thr)
+    left_final, right_final, head_chapter_be_bt = match_chapter_be_bt(head_chapter_bt, max_thr)
+    left_final, right_final, head_chapter_bs_bt = match_chapter_be_bt(head_chapter_be_bt, max_thr)
+
+    return left_final, right_final
+
+
+if __name__ == '__main__':
+    with open('left.txt') as f:
+        left_text = f.readlines()
+    with open('right.txt') as f:
+        right_text = f.readlines()
+
+    left_final, right_final = main(left_text, right_text)
 
     with open(f'output_left_final.txt', 'w') as f_left:
         f_left.write(left_final)
 
     with open(f'output_right_final.txt', 'w') as f_right:
         f_right.write(right_final)
-
-    return left_final, right_final
-
-if __name__ == '__main__':
-    left_final, right_final = main('ruscon_fuzzy/Юристы/Left/paragraphs.txt',
-                                   'ruscon_fuzzy/Юристы/Right/Right.txt')
