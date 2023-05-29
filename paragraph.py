@@ -331,7 +331,7 @@ class BorderMatchByToken(BorderMatch):
         return best_bs, best_be, best_mse, best_char_distance
 
 
-class BorderMatchByBestToken(BorderMatchByToken):
+class BorderMatchByBestBorderEndToken(BorderMatchByToken):
 
     @staticmethod
     def _get_mse_of_found_right_tokens(bs: FoundRightToken, be: FoundRightToken):
@@ -516,20 +516,20 @@ class MatchedChapterByToken(MatchedChapter):
         assert "spawn is not possible"
 
 
-class MatchedChapterByBestToken(MatchedChapterByToken):
+class MatchedChapterByBestBorderEndToken(MatchedChapterByToken):
 
     def _fill_border_matches_heap(self):
         border_matches_heap = []
         left_p = self.left_chapter.paragraphs[self.left_chapter.start_id]
         while left_p.global_position < self.left_chapter.end_id:
             try:
-                border_match = BorderMatchByBestToken(left_bstart_token=left_p.tokens[-1],
-                                                      left_bend_token=left_p.next.tokens[0],
-                                                      left_border_pid=left_p.next.global_position,
-                                                      right_bstart_tokens=self.right_bstart_tokens,
-                                                      right_bend_tokens=self.right_bend_tokens,
-                                                      right_chapter=self.right_chapter
-                                                      )
+                border_match = BorderMatchByBestBorderEndToken(left_bstart_token=left_p.tokens[-1],
+                                                               left_bend_token=left_p.next.tokens[0],
+                                                               left_border_pid=left_p.next.global_position,
+                                                               right_bstart_tokens=self.right_bstart_tokens,
+                                                               right_bend_tokens=self.right_bend_tokens,
+                                                               right_chapter=self.right_chapter
+                                                               )
                 heapq.heappush(border_matches_heap, border_match)
             except Exception as e:
                 print(f"Error: {e}")
@@ -561,12 +561,12 @@ def chapters_by_token_factory(head_chapter):
 
 
 
-def chapters_by_best_token_factory(head_chapter):
+def chapters_by_best_be_token_factory(head_chapter):
     prev_chapter_best_bt = None
     current_chapter = head_chapter
 
     while current_chapter:
-        current_chapter_best_bt = MatchedChapterByBestToken(
+        current_chapter_best_bt = MatchedChapterByBestBorderEndToken(
             left_chapter=current_chapter.left_chapter,
             right_chapter=current_chapter.right_chapter,
             nbrs=(prev_chapter_best_bt, None)
