@@ -20,7 +20,7 @@ def test_61_62():
 
     right_lines = right_result.splitlines()
     assert len(right_lines) == 3
-    assert len(right_lines[0]) == 528
+    assert len(right_lines[0]) == 526
 
 
 if __name__ == '__main__':

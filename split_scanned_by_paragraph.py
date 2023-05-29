@@ -1,5 +1,5 @@
 from paragraph import paragraph_factory, chapters_by_token_factory, MatchedChapter, ChapterSide, logger
-from paragraph import chapters_by_best_be_token_factory
+from paragraph import chapters_by_best_be_token_factory, chapters_by_best_bs_token_factory
 # logger = logging.getLogger(__name__)
 
 
@@ -151,20 +151,39 @@ def main(source_left, source_right):
 
 
 
-    logger.info('chapters_by_best_token_factory...')
-    head_chapter_best_bt = chapters_by_best_be_token_factory(head_chapter_bt)
+    logger.info('chapters_by_best_be_token_factory...')
+    head_chapter_best_be_bt = chapters_by_best_be_token_factory(head_chapter_bt)
     # all_m_chapters = dict()
     # all_m_chapters[head_chapter_bt.se2_id] = head_chapter_bt
 
-    logger.info('MatchedChapterByBestToken iteration')
+    # logger.info('MatchedChapterByBestToken iteration')
     thr = .1
-    while thr < MAX_THR * pow(0.618, 15):  # run only once
-        head_chapter_best_bt = spawn_chapters(head_chapter_best_bt, thr)
-        left_final, right_final = write_chapters_to_files(head_chapter_best_bt, 'best_bt_thr', thr)
+    while thr < MAX_THR * pow(0.618, 12):  # 15 mean run only once
+        head_chapter_best_be_bt = spawn_chapters(head_chapter_best_be_bt, thr)
+        left_final, right_final = write_chapters_to_files(head_chapter_best_be_bt, 'best_be_bt_thr', thr)
         # write_all_m_chapters('all_m_chapters_bt')
 
         thr = thr * (1 + 0.618)
         print(thr)
+
+
+
+    # logger.info('chapters_by_best_bs_token_factory...')
+    head_chapter_best_bs_bt = chapters_by_best_bs_token_factory(head_chapter_best_be_bt)
+    # all_m_chapters = dict()
+    # all_m_chapters[head_chapter_bt.se2_id] = head_chapter_bt
+
+    # logger.info('MatchedChapterByBestToken iteration')
+    thr = .1
+    while thr < MAX_THR * pow(0.618, 12):  # 15 mean run only once
+        head_chapter_best_bs_bt = spawn_chapters(head_chapter_best_bs_bt, thr)
+        left_final, right_final = write_chapters_to_files(head_chapter_best_bs_bt, 'best_bs_bt_thr', thr)
+        # write_all_m_chapters('all_m_chapters_bt')
+
+        thr = thr * (1 + 0.618)
+        print(thr)
+
+
 
 
     with open(f'output_left_final.txt', 'w') as f_left:
