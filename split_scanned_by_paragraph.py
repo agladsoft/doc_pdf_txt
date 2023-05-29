@@ -1,6 +1,6 @@
 from paragraph import paragraph_factory, chapters_by_token_factory, MatchedChapter, ChapterSide, logger
 from paragraph import chapters_by_best_be_token_factory, chapters_by_best_bs_token_factory
-from typing import List, Tuple
+from typing import List
 # logger = logging.getLogger(__name__)
 
 
@@ -35,11 +35,6 @@ def write_chapters_to_files(head_chapter, filename_prefix, thr):
 
                 write_chapter = write_chapter.next
     return text_left, text_right
-
-
-def write_all_m_chapters(prefix):
-    with open(f'{prefix}_{thr}.txt', 'w') as f:
-        f.write("\n".join([str(kv) for kv in all_m_chapters.items()]))
 
 
 def spawn_chapters(head_chapter: MatchedChapter, thr):
@@ -148,17 +143,17 @@ def match_chapter_be_bt(head_chapter_bt, max_thr):
 
 def match_chapter_bs_bt(head_chapter_bt, max_thr):
     logger.info('chapters_by_best_be_token_factory...')
-    head_chapter_best_be_bt = chapters_by_best_be_token_factory(head_chapter_bt)
+    head_chapter_best = chapters_by_best_bs_token_factory(head_chapter_bt)
     # logger.info('MatchedChapterByBestToken iteration')
     thr = .1
     while thr < max_thr * pow(0.618, 8):  # 15 mean run only once
-        head_chapter_best_be_bt = spawn_chapters(head_chapter_best_be_bt, thr)
-        left_final, right_final = write_chapters_to_files(head_chapter_best_be_bt, 'best_be_bt_thr', thr)
+        head_chapter_best = spawn_chapters(head_chapter_best, thr)
+        left_final, right_final = write_chapters_to_files(head_chapter_best, 'best_be_bt_thr', thr)
 
         thr = thr * (1 + 0.618)
         print(thr)
 
-    return left_final, right_final, head_chapter_best_be_bt
+    return left_final, right_final, head_chapter_best
 
 
 def main(source_left: List[str], source_right: List[str], max_thr):

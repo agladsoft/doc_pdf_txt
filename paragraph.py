@@ -45,7 +45,7 @@ class Paragraph(object):
         self.symbols_count = len(self.symbols)
         self.global_position = position
         self.token_borders = self._get_cleaned_token_borders()
-        self.tokens, self.token_start_end = self._get_tokens(3)
+        self.tokens, self.token_start_end = self._get_tokens(2)
         self.tokens_count = len(self.tokens)
         self.prev = nbrs[0]
         self.next = nbrs[1]
