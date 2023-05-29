@@ -113,8 +113,8 @@ def main(source_left, source_right):
 
     logger.info('flatten_right_paragraphs_text...')
     right_text = flatten_right_paragraphs_text(head_chapter)
-    with open('ruscon_fuzzy/Юристы/Right/flatten_right_paragraphs_text.txt', 'w') as f:
-        f.writelines(right_text)
+    # with open('ruscon_fuzzy/Юристы/Right/flatten_right_paragraphs_text.txt', 'w') as f:
+    #     f.writelines(right_text)
     # Build data structeres from the scratch
     right_paragraphs = paragraph_factory(right_text)
     right_chapter = ChapterSide(right_paragraphs, 0, next(reversed(right_paragraphs)))
@@ -147,24 +147,25 @@ def main(source_left, source_right):
 
         thr = thr * (1 + 0.618)
         print(thr)
+    a = 1
 
 
 
+    logger.info('chapters_by_best_token_factory...')
+    head_chapter_best_bt = chapters_by_best_token_factory(head_chapter_bt)
+    # all_m_chapters = dict()
+    # all_m_chapters[head_chapter_bt.se2_id] = head_chapter_bt
 
-    # logger.info('chapters_by_best_token_factory...')
-    # head_chapter_best_bt = chapters_by_best_token_factory(head_chapter)
-    # # all_m_chapters = dict()
-    # # all_m_chapters[head_chapter_bt.se2_id] = head_chapter_bt
-    #
-    # logger.info('MatchedChapterByBestToken iteration')
-    # thr = .1
-    # while thr < MAX_THR * pow(0.618, 1):
-    #     head_chapter_best_bt = spawn_chapters(head_chapter_best_bt, thr)
-    #     left_final, right_final = write_chapters_to_files(head_chapter_best_bt, 'best_bt_thr', thr)
-    #     # write_all_m_chapters('all_m_chapters_bt')
-    #
-    #     thr = thr * (1 + 0.618)
-    #     print(thr)
+    logger.info('MatchedChapterByBestToken iteration')
+    thr = .1
+    while thr < MAX_THR * pow(0.618, 15): # run only once
+        head_chapter_best_bt = spawn_chapters(head_chapter_best_bt, thr)
+        left_final, right_final = write_chapters_to_files(head_chapter_best_bt, 'best_bt_thr', thr)
+        # write_all_m_chapters('all_m_chapters_bt')
+
+        thr = thr * (1 + 0.618)
+        print(thr)
+
 
     with open(f'output_left_final.txt', 'w') as f_left:
         f_left.write(left_final)
