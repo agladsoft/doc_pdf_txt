@@ -3,7 +3,7 @@ from split_scanned_by_paragraph import main
 def test_02():
     left_source = 'tests/test_02_left.txt'
     right_source = 'tests/test_02_right.txt'
-    left_result, right_result = main(left_source, right_source)
+    left_result, right_result = main(left_source, right_source, 200)
     left_result = left_result.strip()
     right_result = right_result.strip()
 
