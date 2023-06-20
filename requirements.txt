@@ -1,0 +1,6 @@
+colorlog==6.7.0
+fuzzywuzzy==0.18.0
+Levenshtein==0.20.8
+numpy==1.24.2
+python-Levenshtein==0.20.8
+rapidfuzz==2.13.2
