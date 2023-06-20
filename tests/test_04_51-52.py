@@ -8,7 +8,12 @@ def test_04():
     """
     left_source = f'tests/{test_number}_left.txt'
     right_source = f'tests/{test_number}_right.txt'
-    left_result, right_result = main(left_source, right_source, 200)
+    with open(left_source) as f:
+        left_text = f.readlines()
+    with open(right_source) as f:
+        right_text = f.readlines()
+
+    left_result, right_result = main(left_text, right_text, 200)
     left_result = left_result.strip()
     right_result = right_result.strip()
 
